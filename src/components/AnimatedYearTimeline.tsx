@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface NewsItem {
   title: string;
@@ -76,14 +76,19 @@ const timelineData: TimelineData[] = [
     year: "2022",
     newsItems: [
       {
-        title: "Placeholder title for 2022 Item 1",
-        location: "City",
-        date: "Month 2022"
+        title: "ArcelorMittal Nippon Steel India collaborates with National Skill Development Corporation again to provide digital training for young people nationwide",
+        location: "New Delhi",
+        date: "December 2022"
       },
       {
-        title: "Placeholder title for 2022 Item 2",
-        location: "City",
-        date: "Month 2022"
+        title: "ArcelorMittal Nippon Steel India completes Rs 16,500 crore acquisition of port and power assets from Essar Group",
+        location: "Mumbai",
+        date: "November 2022"
+      },
+      {
+        title: "ArcelorMittal Nippon Steel India unveils 'Reimagineering', its first-ever corporate brand campaign",
+        location: "Mumbai",
+        date: "November 2022"
       }
     ]
   },
@@ -147,14 +152,48 @@ const timelineData: TimelineData[] = [
 export const AnimatedYearTimeline = () => {
   const [currentYearIndex, setCurrentYearIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
 
-  // Auto-advance timeline every 4 seconds
+  // Handle scroll navigation
   useEffect(() => {
+    const handleScroll = (e: WheelEvent) => {
+      if (!sectionRef.current) return;
+      
+      const rect = sectionRef.current.getBoundingClientRect();
+      const isInView = rect.top <= window.innerHeight && rect.bottom >= 0;
+      
+      if (!isInView || isScrolling) return;
+
+      e.preventDefault();
+      setIsScrolling(true);
+
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const newIndex = Math.max(0, Math.min(timelineData.length - 1, currentYearIndex + direction));
+      
+      if (newIndex !== currentYearIndex) {
+        setCurrentYearIndex(newIndex);
+      }
+
+      setTimeout(() => setIsScrolling(false), 800);
+    };
+
+    const section = sectionRef.current;
+    if (section) {
+      section.addEventListener('wheel', handleScroll, { passive: false });
+      return () => section.removeEventListener('wheel', handleScroll);
+    }
+  }, [currentYearIndex, isScrolling]);
+
+  // Auto-advance timeline every 5 seconds (when not scrolling)
+  useEffect(() => {
+    if (isScrolling) return;
+    
     const interval = setInterval(() => {
       setCurrentYearIndex((prev) => (prev + 1) % timelineData.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isScrolling]);
 
   const handleYearChange = (index: number) => {
     if (index !== currentYearIndex && !isAnimating) {
@@ -165,10 +204,12 @@ export const AnimatedYearTimeline = () => {
   };
 
   const currentData = timelineData[currentYearIndex];
-  const yearSuffix = currentData.year.slice(2); // "19", "20", etc.
 
   return (
-    <section className="relative min-h-screen bg-timeline-dark text-timeline-light overflow-hidden flex flex-col justify-center py-20">
+    <section 
+      ref={sectionRef}
+      className="relative min-h-screen bg-timeline-dark text-timeline-light overflow-hidden flex flex-col justify-center py-20"
+    >
       {/* Header */}
       <div className="absolute top-12 left-1/2 transform -translate-x-1/2">
         <h2 className="text-timeline-muted uppercase tracking-[4px] text-sm font-light">
@@ -196,47 +237,49 @@ export const AnimatedYearTimeline = () => {
             </div>
 
             {/* Main Year Display */}
-            <div className="relative z-10 flex items-center justify-center">
-              {/* Fixed "20" Prefix */}
+            <div className="relative z-10 flex items-center justify-start">
+              {/* Fixed "20" Prefix - Outside the shape */}
               <span 
-                className="text-[120px] lg:text-[200px] font-bold text-timeline-red leading-none mr-2"
+                className="text-[120px] lg:text-[180px] font-bold text-timeline-red leading-none mr-4"
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 20
               </span>
               
-              {/* Sliding Year Suffix Container */}
-              <div className="relative w-[150px] lg:w-[250px] h-[120px] lg:h-[200px] overflow-hidden">
-                {/* Red Parallelogram Background */}
+              {/* Tilted Rectangle Container for Year Suffix */}
+              <div className="relative">
+                {/* Red Tilted Rectangle Background */}
                 <div 
-                  className="absolute inset-0 bg-timeline-red transform -skew-x-12 shadow-lg"
+                  className="w-[180px] lg:w-[280px] h-[120px] lg:h-[180px] bg-timeline-red transform rotate-12 shadow-lg"
                   style={{ 
                     background: 'var(--timeline-gradient)',
                     boxShadow: 'var(--timeline-shadow)'
                   }}
                 />
                 
-                {/* Year Suffix Slider */}
-                <div 
-                  className="absolute inset-0 flex flex-col items-center justify-center transition-transform"
-                  style={{
-                    transform: `translateY(-${currentYearIndex * 100}%)`,
-                    transition: 'var(--timeline-transition)'
-                  }}
-                >
-                  {timelineData.map((item, index) => (
-                    <div 
-                      key={item.year}
-                      className="w-full h-[120px] lg:h-[200px] flex items-center justify-center"
-                    >
-                      <span 
-                        className="text-[80px] lg:text-[140px] font-bold text-timeline-light leading-none"
-                        style={{ fontFamily: 'Arial, sans-serif' }}
+                {/* Year Suffix Container - Positioned inside the tilted rectangle */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div 
+                    className="flex flex-col items-center justify-center h-full transition-transform"
+                    style={{
+                      transform: `translateY(-${currentYearIndex * 100}%)`,
+                      transition: 'var(--timeline-transition)'
+                    }}
+                  >
+                    {timelineData.map((item, index) => (
+                      <div 
+                        key={item.year}
+                        className="w-full h-[120px] lg:h-[180px] flex items-center justify-center"
                       >
-                        {item.year.slice(2)}
-                      </span>
-                    </div>
-                  ))}
+                        <span 
+                          className="text-[70px] lg:text-[120px] font-bold text-timeline-light leading-none transform -rotate-12"
+                          style={{ fontFamily: 'Arial, sans-serif' }}
+                        >
+                          {item.year.slice(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
