@@ -1,0 +1,14 @@
+<!-- dist/404.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="refresh" content="0; url=/chronoslide-sync/" />
+    <script>
+      // For client-side router fallback
+      var l = window.location;
+      var path = l.pathname.replace(/^\\/chronoslide-sync/, '');
+      window.location.replace('/chronoslide-sync/' + (path ? '#' + path : ''));
+    </script>
+  </head>
+  <body></body>
+</html>
