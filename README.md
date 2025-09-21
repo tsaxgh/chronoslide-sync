@@ -44,7 +44,4 @@ This project is a modern React + Vite web application featuring a custom animate
 ## Deployment
 
 You can deploy the contents of the `dist/` folder to any static hosting provider (Vercel, Netlify, GitHub Pages, etc.).
-
 ---
-
-All references to Lovable and its services have been removed from this project. This is now a fully standalone React/Vite application.
